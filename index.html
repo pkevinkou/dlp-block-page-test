@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>DLP Block Page 測試（純HTML表單，無JavaScript，外部託管）</title>
+</head>
+<body>
+<h1>DLP Block Page 視覺化測試（GitHub Pages外部託管版）</h1>
+<p>這個表單完全沒有JavaScript攔截，按送出後是瀏覽器真正的整頁導覽（page navigation），
+如果內容觸發DLP擋下，會直接整頁顯示Forcepoint的block頁面。這個頁面本身架在GitHub Pages上，
+完全不是我們自己控制的環境，用來排除「本機來源」這個變數。</p>
+
+<form method="POST" action="https://dlptest.com/api/http-post/">
+  <label for="message">測試內容（預設已放入會觸發規則的關鍵字，可自行修改）：</label><br>
+  <textarea id="message" name="message" rows="4" cols="50">身分證字號 A123456789 姓名王小明</textarea><br><br>
+  <button type="submit">送出（整頁導覽，非AJAX）</button>
+</form>
+
+</body>
+</html>

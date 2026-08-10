@@ -2,19 +2,50 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>DLP Block Page 測試（純HTML表單，無JavaScript，外部託管）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DLP Test Echo</title>
+<style>
+  body { font-family: Arial, Tahoma, Verdana, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 20px; }
+  textarea { width: 100%; height: 120px; font-family: monospace; font-size: 14px; box-sizing: border-box; }
+  input[type=file] { margin-top: 8px; }
+  button { margin-top: 16px; padding: 8px 24px; font-size: 14px; cursor: pointer; }
+  #result { margin-top: 20px; padding: 12px; background: #f4f4f4; border: 1px solid #ddd; white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; display: none; }
+  .note { color: #777; font-size: 12px; margin-top: 8px; }
+</style>
 </head>
 <body>
-<h1>DLP Block Page 視覺化測試（GitHub Pages外部託管版）</h1>
-<p>這個表單完全沒有JavaScript攔截，按送出後是瀏覽器真正的整頁導覽（page navigation），
-如果內容觸發DLP擋下，會直接整頁顯示Forcepoint的block頁面。這個頁面本身架在GitHub Pages上，
-完全不是我們自己控制的環境，用來排除「本機來源」這個變數。</p>
+<h1>DLP Test Echo</h1>
+<p>純測試用：送出的文字/檔案只會被即時回顯位元組數，不會被儲存。</p>
 
-<form method="POST" action="https://dlptest.com/api/http-post/">
-  <label for="message">測試內容（預設已放入會觸發規則的關鍵字，可自行修改）：</label><br>
-  <textarea id="message" name="message" rows="4" cols="50">身分證字號 A123456789 姓名王小明</textarea><br><br>
-  <button type="submit">送出（整頁導覽，非AJAX）</button>
+<form id="f">
+  <label>文字內容</label>
+  <textarea name="text" id="text"></textarea>
+  <br>
+  <label>檔案（可選）</label><br>
+  <input type="file" name="file" id="file">
+  <br>
+  <button type="submit">送出</button>
 </form>
 
+<div id="result"></div>
+<p class="note">Client IP不記錄、內容不落地存檔，收到後只回傳大小資訊。</p>
+
+<script>
+document.getElementById('f').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData(this);
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+  resultEl.textContent = '送出中...';
+  try {
+    const res = await fetch('/api/echo', { method: 'POST', body: fd });
+    const data = await res.json();
+    resultEl.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    resultEl.textContent = '錯誤: ' + err.message;
+  }
+});
+</script>
 </body>
 </html>

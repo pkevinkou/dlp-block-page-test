@@ -110,15 +110,14 @@
           <span>萬壽橋頭-木柵（往南）／933</span>
         </div></div></div>
   </div>
-  <p class="note">動線為示意，依原公告文字連接主要路口與站位繪製，非精確道路幾何。底圖：內政部國土測繪中心「臺灣通用電子地圖／正射影像」WMTS 開放服務，或 OpenStreetMap 貢獻者。實際以現場管制及公車業者公告為準。</p>
+  <p class="note">路線依實際道路幾何繪製（OpenStreetMap 道路資料），站點座標取自 OSM 公車站位。底圖：內政部國土測繪中心「臺灣通用電子地圖／正射影像」WMTS 開放服務，或 OpenStreetMap 貢獻者。實際以現場管制及公車業者公告為準。</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
+var DATA = {"orig":[[24.993753,121.573827],[24.993347,121.573798],[24.993244,121.573788],[24.992929,121.573753],[24.992873,121.573749],[24.992621,121.573728],[24.992585,121.573725],[24.99249,121.573719],[24.991834,121.57366],[24.991786,121.573658],[24.991656,121.573668],[24.991665,121.573845],[24.991667,121.573889],[24.991682,121.574043],[24.991713,121.574262],[24.991752,121.57447],[24.991818,121.574729],[24.991835,121.574797],[24.991845,121.574836],[24.991864,121.574912],[24.991875,121.574961],[24.991904,121.575097],[24.991919,121.575217],[24.991926,121.575313],[24.991924,121.575418],[24.991916,121.575542],[24.9919,121.575647],[24.991884,121.575721],[24.991865,121.575793],[24.99182,121.575917],[24.991769,121.576034],[24.991685,121.576192],[24.991598,121.57633],[24.991513,121.57645],[24.991442,121.576529],[24.991387,121.576581],[24.991315,121.576635],[24.991229,121.576689],[24.991164,121.576728],[24.991058,121.576771],[24.990961,121.576801],[24.990896,121.576816],[24.99082,121.576828],[24.990733,121.576832],[24.990687,121.576833],[24.990672,121.576833],[24.990621,121.576833],[24.990542,121.576834],[24.990496,121.576835],[24.989871,121.576841],[24.989548,121.576844],[24.989482,121.576847],[24.98931,121.576864],[24.989231,121.57688],[24.989204,121.576885],[24.988945,121.576941],[24.98875,121.576987],[24.988719,121.576994],[24.988658,121.577009],[24.988615,121.576858],[24.988601,121.576821],[24.988559,121.576718],[24.988512,121.576632],[24.988443,121.576532],[24.988377,121.576446],[24.988268,121.576307],[24.988061,121.576078],[24.988042,121.576058],[24.988,121.576013],[24.987919,121.575926],[24.987789,121.575789],[24.987723,121.575719],[24.987675,121.575671],[24.987687,121.575607],[24.987778,121.575016],[24.987812,121.574853],[24.987907,121.574274],[24.98793,121.574111],[24.987962,121.573993],[24.988029,121.573749],[24.988037,121.573717],[24.988053,121.573673],[24.988093,121.573548]],"tail":[[24.987753,121.57066],[24.987662,121.570662],[24.987617,121.570663],[24.987036,121.570673],[24.986713,121.570679],[24.986644,121.57068],[24.986579,121.570681],[24.986504,121.570683],[24.986475,121.570683],[24.986024,121.570691],[24.985757,121.570623],[24.98568,121.570602],[24.985641,121.570587],[24.985208,121.570471],[24.985154,121.570456],[24.985098,121.570414],[24.984847,121.570241],[24.984833,121.57023],[24.984651,121.570089],[24.984458,121.569875],[24.984412,121.569825],[24.98434,121.569714],[24.984228,121.569531],[24.984171,121.569401],[24.98413,121.569279],[24.983992,121.568872],[24.98397,121.568808],[24.983925,121.568673],[24.983619,121.567771]],"closed":[[24.988093,121.573548],[24.988106,121.573479],[24.988114,121.573423],[24.988129,121.5733],[24.988138,121.573203],[24.988131,121.573101],[24.988113,121.573009],[24.988108,121.572976],[24.988076,121.57289],[24.987931,121.572517],[24.98771,121.571938],[24.987638,121.571758],[24.987624,121.571701],[24.987613,121.571624],[24.987609,121.571554],[24.987608,121.571507],[24.987613,121.571444],[24.987645,121.571331],[24.987666,121.57119],[24.987713,121.570884],[24.987733,121.570749],[24.987753,121.57066]],"detour":[[24.988735,121.576982],[24.988692,121.57683],[24.988675,121.576785],[24.988631,121.576677],[24.988579,121.576581],[24.988506,121.576476],[24.988438,121.576388],[24.988327,121.576246],[24.988118,121.576015],[24.988098,121.575994],[24.988056,121.575949],[24.987975,121.575862],[24.987845,121.575725],[24.987778,121.575654],[24.987675,121.575671],[24.987668,121.575784],[24.987733,121.575853],[24.987863,121.57599],[24.987944,121.576077],[24.987986,121.576122],[24.988004,121.576141],[24.988209,121.576368],[24.988316,121.576504],[24.98838,121.576588],[24.988445,121.576683],[24.988487,121.576759],[24.988527,121.576857],[24.988538,121.576886],[24.988596,121.577067],[24.988736,121.577081],[24.988767,121.577074],[24.988961,121.577028],[24.989219,121.576973],[24.989245,121.576968],[24.98932,121.576953],[24.989488,121.576936],[24.989549,121.576933],[24.989872,121.57693],[24.990497,121.576924],[24.990543,121.576923],[24.990622,121.576922],[24.990672,121.576922],[24.990688,121.576922],[24.990736,121.576921],[24.990827,121.576917],[24.99091,121.576904],[24.990981,121.576887],[24.991083,121.576856],[24.991196,121.57681],[24.991268,121.576767],[24.991358,121.576711],[24.991436,121.576652],[24.991497,121.576594],[24.991574,121.576508],[24.991663,121.576383],[24.991753,121.57624],[24.99184,121.576076],[24.991894,121.575953],[24.991941,121.575823],[24.991962,121.575744],[24.991979,121.575664],[24.991996,121.575552],[24.992005,121.575422],[24.992007,121.575311],[24.991999,121.575207],[24.991983,121.57508],[24.991954,121.57494],[24.991942,121.574889],[24.991923,121.574812],[24.991913,121.574773],[24.991896,121.574705],[24.99183,121.574449],[24.991793,121.574246],[24.991762,121.574031],[24.991747,121.573881],[24.991746,121.57384],[24.991737,121.573674],[24.991763,121.573563],[24.991775,121.573496],[24.991768,121.573273],[24.991773,121.572961],[24.991801,121.571298],[24.9918,121.571217],[24.991737,121.571043],[24.991562,121.570999],[24.991528,121.570992],[24.99145,121.570977],[24.991322,121.570953],[24.991234,121.570936],[24.990782,121.570849],[24.990753,121.570844],[24.990745,121.570842],[24.990497,121.570794],[24.990444,121.570784],[24.989848,121.57067],[24.989349,121.570596],[24.989227,121.570582],[24.988903,121.57056],[24.988858,121.570557],[24.98883,121.570557],[24.988602,121.570556],[24.988517,121.570557],[24.988477,121.570558],[24.98825,121.570562],[24.988028,121.570566],[24.987975,121.570567],[24.987838,121.57057],[24.987752,121.570571]],"stops":[["新光路口",[24.988062,121.573848],1,"往西方向取消停靠"],["政大",[24.987814,121.574742],0,"往西正常停靠"],["政大",[24.987554,121.57653],1,"往東取消停靠"],["政大一",[24.987733,121.576052],0,"改道時往南停靠"],["政大一",[24.988259,121.576338],1,"南環幹線往東取消"],["政大(聯合醫院)",[24.98742,121.576767],0,"棕18 改由此起站"],["指南路口",[24.987194,121.570723],0,"正常停靠"],["指南路",[24.987772,121.569998],0,"正常停靠"],["文山行政中心(木新)",[24.990038,121.570869],1,"933 往北取消停靠"],["文山行政中心(木新)",[24.989444,121.570621],1,"933 往南取消停靠"],["萬壽橋頭(木柵)",[24.991309,121.570973],1,"933 往南取消停靠"],["萬壽橋頭(木柵)",[24.991409,121.571151],0,"改道行經"],["木柵國小",[24.991628,121.570596],0,"933 改道停靠"],["指南山莊",[24.988962,121.57853],0,"小10、南環幹線停靠"],["萬壽橋頭(新光)",[24.992859,121.573803],0,"正常停靠"],["萬壽橋頭(秀明)",[24.991615,121.574163],0,"改道行經"]],"badges":{"daonan":[24.987869,121.57244],"uturn":[24.987675,121.575671],"wsbridge":[24.991672,121.5724]}};
 (function(){
   var map = L.map('map',{scrollWheelZoom:true}).setView([24.9895,121.5730],15);
-
-  // ---------- basemaps (NLSC government open WMTS first) ----------
   var bases = [
     {url:'https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}',
      attr:'&copy; 內政部國土測繪中心 臺灣通用電子地圖', maxNative:18},
@@ -134,75 +133,31 @@
     var b=bases[i];
     baseLayer=L.tileLayer(b.url,{maxZoom:19,maxNativeZoom:b.maxNative,attribution:b.attr});
     baseLayer.on('tileerror',function(){ if(++errs>5) warn.style.display='block'; });
-    baseLayer.addTo(map);
-    baseLayer.bringToBack();
+    baseLayer.addTo(map); baseLayer.bringToBack();
   }
   setBase(0);
   Array.prototype.forEach.call(document.querySelectorAll('.base'),function(btn){
     btn.addEventListener('click',function(){
       document.querySelectorAll('.base').forEach(function(b){b.classList.remove('on');});
-      btn.classList.add('on');
-      setBase(+btn.dataset.base);
+      btn.classList.add('on'); setBase(+btn.dataset.base);
     });
   });
 
-  // ---------- coordinates ----------
-  var P = {
-    xinguangN:[24.99272,121.57387], xiuXin:[24.99171,121.57365],
-    xiu1:[24.99060,121.57470], xiu2:[24.98960,121.57580],
-    wanshouXiu:[24.98868,121.57701],
-    zhengda1:[24.98823,121.57641], sanjiao:[24.98790,121.57610],
-    zhengdaW:[24.98778,121.57476], xinguangKou:[24.98810,121.57387],
-    zn1:[24.98795,121.57320], daonan:[24.98801,121.57271], daonanW:[24.98790,121.57190],
-    znMuxin:[24.98772,121.57066],
-    mx1:[24.98880,121.57015], wenshan:[24.98975,121.56981],
-    mx2:[24.99020,121.57030], muxinMuzha:[24.99064,121.57091],
-    wanshouTou:[24.99136,121.57114], wsBridgeW:[24.99145,121.57160],
-    wsBridgeE:[24.99180,121.57320],
-    muzhaES:[24.99160,121.57018], zhinanShanzhuang:[24.98898,121.57857],
-    zhinanKou:[24.98722,121.57075], zhinanStop:[24.98778,121.56994],
-    zhengdaE:[24.98758,121.57654], hospital:[24.98765,121.57652],
-    // 迴轉回程的平行偏移點，讓來回兩股分得開
-    zhengda1R:[24.98831,121.57632], sanjiaoR:[24.98798,121.57601],
-    wanshouXiuR:[24.98876,121.57692]
-  };
-
-  var green = [P.xinguangN,P.xiuXin,P.xiu1,P.xiu2,P.wanshouXiu,
-               P.zhengda1,P.sanjiao,P.zhengdaW,P.xinguangKou,P.zn1];
-  var greenClosed = [P.zn1,P.daonan,P.daonanW,P.znMuxin];
-  var greenTail = [P.znMuxin,P.mx1,P.wenshan,P.mx2,P.muxinMuzha];
-
-  var orange = [P.wanshouXiu,P.zhengda1,P.sanjiao,
-                P.sanjiaoR,P.zhengda1R,P.wanshouXiuR,
-                P.xiu2,P.xiu1,P.xiuXin,
-                P.wsBridgeE,P.wsBridgeW,P.wanshouTou,
-                P.muxinMuzha,P.mx2,P.wenshan,P.mx1,P.znMuxin];
-
   var gLayer=L.layerGroup(), oLayer=L.layerGroup(), sLayer=L.layerGroup();
-
   function draw(group,pts,color,dash,weight){
     L.polyline(pts,{color:'#F7F6F3',weight:weight+4,opacity:.85,lineJoin:'round'}).addTo(group);
     L.polyline(pts,{color:color,weight:weight,opacity:.95,dashArray:dash,lineJoin:'round'}).addTo(group);
   }
-  draw(gLayer,green,'#1B7F45',null,6);
-  draw(gLayer,greenTail,'#1B7F45',null,6);
-  L.polyline(greenClosed,{color:'#C7362F',weight:7,opacity:.95,dashArray:'2 11',lineCap:'round'}).addTo(gLayer);
-  draw(oLayer,orange,'#F26B0F','13 9',6);
+  draw(gLayer,DATA.orig,'#1B7F45',null,6);
+  draw(gLayer,DATA.tail,'#1B7F45',null,6);
+  L.polyline(DATA.closed,{color:'#C7362F',weight:7,opacity:.95,dashArray:'2 11',lineCap:'round'}).addTo(gLayer);
+  draw(oLayer,DATA.detour,'#F26B0F','13 9',6);
 
-  // ---------- arrows: evenly spaced, aligned to segment bearing ----------
-  var M_PER_DEG = 111320;
-  function segMeters(a,b){
-    var la=(a[0]+b[0])/2*Math.PI/180;
-    var dx=(b[1]-a[1])*M_PER_DEG*Math.cos(la), dy=(b[0]-a[0])*M_PER_DEG;
-    return Math.sqrt(dx*dx+dy*dy);
-  }
-  // screen-clockwise angle from east, for a glyph that points right
-  function screenAngle(a,b){
-    var la=(a[0]+b[0])/2*Math.PI/180;
-    var dx=(b[1]-a[1])*Math.cos(la);   // east
-    var dy=-(b[0]-a[0]);               // screen y grows downward
-    return Math.atan2(dy,dx)*180/Math.PI;
-  }
+  var M=111320;
+  function segM(a,b){var la=(a[0]+b[0])/2*Math.PI/180;
+    return Math.hypot((b[1]-a[1])*M*Math.cos(la),(b[0]-a[0])*M);}
+  function ang(a,b){var la=(a[0]+b[0])/2*Math.PI/180;
+    return Math.atan2(-(b[0]-a[0]),(b[1]-a[1])*Math.cos(la))*180/Math.PI;}
   function arrowIcon(color,deg){
     return L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:
       '<svg class="arw" viewBox="0 0 16 16" style="transform:rotate('+deg.toFixed(1)+'deg)">'+
@@ -213,54 +168,36 @@
       '<path d="M9.6 4.4 L13.2 8 L9.6 11.6" fill="none" stroke="'+color+'" stroke-width="2.4" '+
       'stroke-linecap="round" stroke-linejoin="round"/></svg>'});
   }
-  function placeArrows(group,pts,color,spacing){
-    var carry=spacing*0.55;
+  function arrows(group,pts,color,spacing){
+    var carry=spacing*0.5;
     for(var i=1;i<pts.length;i++){
-      var a=pts[i-1], b=pts[i];
-      var len=segMeters(a,b);
-      if(len<1) continue;
-      var deg=screenAngle(a,b);
-      var t=carry;
+      var a=pts[i-1],b=pts[i],len=segM(a,b);
+      if(len<0.5){continue;}
+      var deg=ang(a,b),t=carry;
       while(t<len){
         var f=t/len;
-        var pos=[a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f];
-        L.marker(pos,{icon:arrowIcon(color,deg),interactive:false,zIndexOffset:400}).addTo(group);
+        L.marker([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f],
+          {icon:arrowIcon(color,deg),interactive:false,zIndexOffset:400}).addTo(group);
         t+=spacing;
       }
       carry=t-len;
     }
   }
-  placeArrows(oLayer,orange,'#F26B0F',95);
-  placeArrows(gLayer,green,'#1B7F45',150);
-  placeArrows(gLayer,greenTail,'#1B7F45',150);
+  arrows(oLayer,DATA.detour,'#F26B0F',110);
+  arrows(gLayer,DATA.orig,'#1B7F45',170);
+  arrows(gLayer,DATA.tail,'#1B7F45',170);
 
-  // ---------- badges ----------
-  L.marker(P.daonan,{icon:L.divIcon({className:'',html:
-    '<div style="background:#C7362F;color:#fff;font:900 12px/1 \'Noto Sans TC\',sans-serif;'+
-    'padding:6px 9px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);white-space:nowrap">'+
-    '✕ 道南橋封閉</div>',iconSize:[0,0],iconAnchor:[45,36]})}).addTo(gLayer);
+  function badge(pos,bg,txt,ax,ay,group){
+    L.marker(pos,{icon:L.divIcon({className:'',html:
+      '<div style="background:'+bg+';color:#fff;font:900 11.5px/1 \'Noto Sans TC\',sans-serif;'+
+      'padding:6px 9px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);white-space:nowrap">'+
+      txt+'</div>',iconSize:[0,0],iconAnchor:[ax,ay]})}).addTo(group);
+  }
+  badge(DATA.badges.daonan,'#C7362F','✕ 道南橋封閉',46,34,gLayer);
+  badge(DATA.badges.uturn,'#F26B0F','↺ 政大正門前三角迴轉',-12,24,oLayer);
+  badge(DATA.badges.wsbridge,'#F26B0F','↑ 改走萬壽橋',34,-14,oLayer);
 
-  L.marker(P.sanjiao,{icon:L.divIcon({className:'',html:
-    '<div style="background:#F26B0F;color:#fff;font:900 11px/1 \'Noto Sans TC\',sans-serif;'+
-    'padding:5px 8px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.3);white-space:nowrap">'+
-    '↺ 政大正門前三角迴轉</div>',iconSize:[0,0],iconAnchor:[-10,26]})}).addTo(oLayer);
-
-  // ---------- bus stops ----------
-  var stops = [
-    ['新光路口', P.xinguangKou, true,  '往西方向取消停靠'],
-    ['政大', P.zhengdaW, false, '往西正常；往東取消'],
-    ['政大', P.zhengdaE, true,  '往東取消停靠'],
-    ['政大一', P.zhengda1, false, '改道時往南停靠；南環幹線往東取消'],
-    ['政大(聯合醫院)', P.hospital, false, '棕18 改由此起站'],
-    ['指南路口', P.zhinanKou, false, '正常停靠'],
-    ['指南路', P.zhinanStop, false, '正常停靠'],
-    ['文山行政中心(木新)', P.wenshan, true, '933 往北、往南取消'],
-    ['萬壽橋頭(木柵)', P.wanshouTou, true, '933 往南取消'],
-    ['木柵國小', P.muzhaES, false, '933 改道停靠'],
-    ['指南山莊', P.zhinanShanzhuang, false, '小10、南環幹線停靠'],
-    ['萬壽橋(新光)', P.xinguangN, false, '正常停靠']
-  ];
-  stops.forEach(function(s){
+  DATA.stops.forEach(function(s){
     L.circleMarker(s[1],{radius:6,color:'#fff',weight:2,
       fillColor:s[2]?'#C7362F':'#24272B',fillOpacity:1})
       .bindPopup('<b>'+s[0]+'</b><br>'+s[3]).addTo(sLayer);
@@ -270,17 +207,16 @@
   });
 
   gLayer.addTo(map); oLayer.addTo(map); sLayer.addTo(map);
-
   function toggle(id,lyr){
     var btn=document.getElementById(id);
     btn.addEventListener('click',function(){
-      if(map.hasLayer(lyr)){ map.removeLayer(lyr); btn.classList.remove('on'); }
-      else { lyr.addTo(map); btn.classList.add('on'); }
+      if(map.hasLayer(lyr)){map.removeLayer(lyr);btn.classList.remove('on');}
+      else{lyr.addTo(map);btn.classList.add('on');}
     });
   }
   toggle('bG',gLayer); toggle('bO',oLayer); toggle('bS',sLayer);
-
-  var bounds=L.latLngBounds(green.concat(orange,greenTail,stops.map(function(s){return s[1];})));
+  var all=DATA.orig.concat(DATA.tail,DATA.closed,DATA.detour,DATA.stops.map(function(s){return s[1];}));
+  var bounds=L.latLngBounds(all);
   function fit(){ map.fitBounds(bounds,{padding:[45,45]}); }
   fit();
   document.getElementById('bFit').addEventListener('click',fit);

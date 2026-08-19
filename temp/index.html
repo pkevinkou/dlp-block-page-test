@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>道南橋封閉 公車改道地圖</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --concrete:#E3E1DC; --paper:#F7F6F3; --asphalt:#24272B; --soft:#5A6068;
+    --green:#1B7F45; --orange:#F26B0F; --signal:#C7362F; --line:#C9C6BF;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--concrete);color:var(--asphalt);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.6}
+  .hazard{height:10px;background:repeating-linear-gradient(45deg,#F5A623 0 14px,var(--asphalt) 14px 28px)}
+  header{background:var(--asphalt);color:var(--paper);padding:16px 18px}
+  header h1{margin:0;font-size:1.12rem;font-weight:900;letter-spacing:-.01em}
+  header p{margin:5px 0 0;font-size:.82rem;color:#A9AFB6;font-family:"IBM Plex Mono",monospace}
+  header p em{font-style:normal;color:#F5A623}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;padding:11px 18px;background:var(--paper);border-bottom:1px solid var(--line);align-items:center}
+  .bar .lab{font-size:.7rem;letter-spacing:.14em;color:var(--soft);font-weight:700;margin-right:2px}
+  button{
+    font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;
+    border:2px solid var(--asphalt);background:transparent;color:var(--asphalt);
+    padding:5px 12px;border-radius:999px;transition:all .15s
+  }
+  button:focus-visible{outline:3px solid #F5A623;outline-offset:2px}
+  button.on.g{background:var(--green);border-color:var(--green);color:#fff}
+  button.on.o{background:var(--orange);border-color:var(--orange);color:#fff}
+  button.on.s,button.on.base{background:var(--asphalt);color:#fff}
+
+  #map{height:min(64vh,620px);width:100%;background:#DDD9D2;z-index:0}
+  .tilewarn{display:none;padding:9px 18px;background:#FBEEDC;border-bottom:1px solid var(--line);font-size:.8rem;color:#8A5A12}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 20px;padding:12px 18px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.82rem;color:var(--soft)}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .sw{width:26px;height:5px;border-radius:2px;flex:none}
+  .dot{width:13px;height:13px;border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--asphalt)}
+
+  .panel{padding:18px;max-width:900px;margin:0 auto 60px}
+  h2{font-size:.74rem;letter-spacing:.18em;color:var(--soft);margin:26px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--asphalt)}
+  .steps{background:var(--paper);border:1px solid var(--line);padding:4px 18px 16px}
+  .step{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:10px 0;border-top:1px solid #EAE8E3;align-items:start}
+  .step:first-child{border-top:0}
+  .num{font-family:"IBM Plex Mono",monospace;font-size:.76rem;font-weight:600;color:#fff;background:var(--orange);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;margin-top:2px}
+  .step p{margin:0;font-size:.92rem}
+  .cancel{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .cancel span{font-size:.8rem;border:1px solid var(--signal);color:var(--signal);padding:1px 9px;border-radius:999px}
+  .note{font-size:.78rem;color:var(--soft);margin:12px 0 0}
+
+  .stoplbl{
+    font-family:"Noto Sans TC",sans-serif;font-size:11px;font-weight:700;white-space:nowrap;
+    background:rgba(247,246,243,.93);border:1px solid #24272B;border-radius:3px;
+    padding:1px 5px;transform:translate(10px,-9px);display:inline-block
+  }
+  .stoplbl.x{border-color:#C7362F;color:#C7362F}
+  .arw{width:16px;height:16px;display:block}
+  .leaflet-container{font-family:"Noto Sans TC",sans-serif}
+  @media (max-width:560px){ #map{height:56vh} .stoplbl{font-size:10px} }
+</style>
+</head>
+<body>
+<div class="hazard"></div>
+<header>
+  <h1>道南橋封閉 · 公車改道地圖</h1>
+  <p>115/08/23 <em>22:00</em> → 08/24 <em>06:00</em>　·　指南路1段（道南橋）路面更新</p>
+</header>
+
+<div class="bar">
+  <span class="lab">圖層</span>
+  <button id="bG" class="on g">原路線</button>
+  <button id="bO" class="on o">臨時改道</button>
+  <button id="bS" class="on s">公車站點</button>
+  <button id="bFit">回到全區</button>
+</div>
+<div class="bar">
+  <span class="lab">底圖</span>
+  <button class="base on" data-base="0">通用電子地圖</button>
+  <button class="base" data-base="1">正射影像</button>
+  <button class="base" data-base="2">OpenStreetMap</button>
+</div>
+
+<div class="tilewarn" id="tilewarn">此底圖圖磚載入受限，請改選其他底圖；路線與站點仍可正常檢視。</div>
+<div id="map"></div>
+
+<div class="legend">
+  <span><i class="sw" style="background:#1B7F45"></i>原路線（經道南橋）</span>
+  <span><i class="sw" style="background:#F26B0F"></i>臨時改道（經萬壽橋）</span>
+  <span><i class="sw" style="background:#C7362F"></i>封閉路段</span>
+  <span><i class="dot" style="background:#24272B"></i>正常停靠站</span>
+  <span><i class="dot" style="background:#C7362F"></i>取消停靠站</span>
+</div>
+
+<div class="panel">
+  <h2>改道動線步驟</h2>
+  <div class="steps">
+    <div class="step"><span class="num">1</span><p>沿原線走 <b>秀明路2段 → 萬壽路</b>，停靠「政大一」（往南）</p></div>
+    <div class="step"><span class="num">2</span><p>到 <b>指南路2段</b>，於<b>政大正門前三角</b>迴轉萬壽路</p></div>
+    <div class="step"><span class="num">3</span><p>回到 <b>秀明路2段</b>，直行過 <b>萬壽橋</b>（取代道南橋）</p></div>
+    <div class="step"><span class="num">4</span><p>橋北左轉 <b>木柵路3段 → 木新路1段</b>，接回原線</p></div>
+    <div class="step"><span class="num">—</span>
+      <div><p style="margin-bottom:6px">全線取消停靠</p>
+        <div class="cancel">
+          <span>新光路口（往西）</span><span>政大（往東）</span>
+          <span>政大一（往東）／南環幹線</span>
+          <span>文山行政中心-木新（往北·往南）／933</span>
+          <span>萬壽橋頭-木柵（往南）／933</span>
+        </div></div></div>
+  </div>
+  <p class="note">動線為示意，依原公告文字連接主要路口與站位繪製，非精確道路幾何。底圖：內政部國土測繪中心「臺灣通用電子地圖／正射影像」WMTS 開放服務，或 OpenStreetMap 貢獻者。實際以現場管制及公車業者公告為準。</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+  var map = L.map('map',{scrollWheelZoom:true}).setView([24.9895,121.5730],15);
+
+  // ---------- basemaps (NLSC government open WMTS first) ----------
+  var bases = [
+    {url:'https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}',
+     attr:'&copy; 內政部國土測繪中心 臺灣通用電子地圖', maxNative:18},
+    {url:'https://wmts.nlsc.gov.tw/wmts/PHOTO2/default/GoogleMapsCompatible/{z}/{y}/{x}',
+     attr:'&copy; 內政部國土測繪中心 正射影像', maxNative:18},
+    {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+     attr:'&copy; OpenStreetMap contributors', maxNative:19}
+  ];
+  var baseLayer=null, errs=0, warn=document.getElementById('tilewarn');
+  function setBase(i){
+    if(baseLayer) map.removeLayer(baseLayer);
+    errs=0; warn.style.display='none';
+    var b=bases[i];
+    baseLayer=L.tileLayer(b.url,{maxZoom:19,maxNativeZoom:b.maxNative,attribution:b.attr});
+    baseLayer.on('tileerror',function(){ if(++errs>5) warn.style.display='block'; });
+    baseLayer.addTo(map);
+    baseLayer.bringToBack();
+  }
+  setBase(0);
+  Array.prototype.forEach.call(document.querySelectorAll('.base'),function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.base').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      setBase(+btn.dataset.base);
+    });
+  });
+
+  // ---------- coordinates ----------
+  var P = {
+    xinguangN:[24.99272,121.57387], xiuXin:[24.99171,121.57365],
+    xiu1:[24.99060,121.57470], xiu2:[24.98960,121.57580],
+    wanshouXiu:[24.98868,121.57701],
+    zhengda1:[24.98823,121.57641], sanjiao:[24.98790,121.57610],
+    zhengdaW:[24.98778,121.57476], xinguangKou:[24.98810,121.57387],
+    zn1:[24.98795,121.57320], daonan:[24.98801,121.57271], daonanW:[24.98790,121.57190],
+    znMuxin:[24.98772,121.57066],
+    mx1:[24.98880,121.57015], wenshan:[24.98975,121.56981],
+    mx2:[24.99020,121.57030], muxinMuzha:[24.99064,121.57091],
+    wanshouTou:[24.99136,121.57114], wsBridgeW:[24.99145,121.57160],
+    wsBridgeE:[24.99180,121.57320],
+    muzhaES:[24.99160,121.57018], zhinanShanzhuang:[24.98898,121.57857],
+    zhinanKou:[24.98722,121.57075], zhinanStop:[24.98778,121.56994],
+    zhengdaE:[24.98758,121.57654], hospital:[24.98765,121.57652],
+    // 迴轉回程的平行偏移點，讓來回兩股分得開
+    zhengda1R:[24.98831,121.57632], sanjiaoR:[24.98798,121.57601],
+    wanshouXiuR:[24.98876,121.57692]
+  };
+
+  var green = [P.xinguangN,P.xiuXin,P.xiu1,P.xiu2,P.wanshouXiu,
+               P.zhengda1,P.sanjiao,P.zhengdaW,P.xinguangKou,P.zn1];
+  var greenClosed = [P.zn1,P.daonan,P.daonanW,P.znMuxin];
+  var greenTail = [P.znMuxin,P.mx1,P.wenshan,P.mx2,P.muxinMuzha];
+
+  var orange = [P.wanshouXiu,P.zhengda1,P.sanjiao,
+                P.sanjiaoR,P.zhengda1R,P.wanshouXiuR,
+                P.xiu2,P.xiu1,P.xiuXin,
+                P.wsBridgeE,P.wsBridgeW,P.wanshouTou,
+                P.muxinMuzha,P.mx2,P.wenshan,P.mx1,P.znMuxin];
+
+  var gLayer=L.layerGroup(), oLayer=L.layerGroup(), sLayer=L.layerGroup();
+
+  function draw(group,pts,color,dash,weight){
+    L.polyline(pts,{color:'#F7F6F3',weight:weight+4,opacity:.85,lineJoin:'round'}).addTo(group);
+    L.polyline(pts,{color:color,weight:weight,opacity:.95,dashArray:dash,lineJoin:'round'}).addTo(group);
+  }
+  draw(gLayer,green,'#1B7F45',null,6);
+  draw(gLayer,greenTail,'#1B7F45',null,6);
+  L.polyline(greenClosed,{color:'#C7362F',weight:7,opacity:.95,dashArray:'2 11',lineCap:'round'}).addTo(gLayer);
+  draw(oLayer,orange,'#F26B0F','13 9',6);
+
+  // ---------- arrows: evenly spaced, aligned to segment bearing ----------
+  var M_PER_DEG = 111320;
+  function segMeters(a,b){
+    var la=(a[0]+b[0])/2*Math.PI/180;
+    var dx=(b[1]-a[1])*M_PER_DEG*Math.cos(la), dy=(b[0]-a[0])*M_PER_DEG;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+  // screen-clockwise angle from east, for a glyph that points right
+  function screenAngle(a,b){
+    var la=(a[0]+b[0])/2*Math.PI/180;
+    var dx=(b[1]-a[1])*Math.cos(la);   // east
+    var dy=-(b[0]-a[0]);               // screen y grows downward
+    return Math.atan2(dy,dx)*180/Math.PI;
+  }
+  function arrowIcon(color,deg){
+    return L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:
+      '<svg class="arw" viewBox="0 0 16 16" style="transform:rotate('+deg.toFixed(1)+'deg)">'+
+      '<path d="M2.5 8 H11" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/>'+
+      '<path d="M9.5 3.6 L14 8 L9.5 12.4" fill="none" stroke="#fff" stroke-width="5.5" '+
+      'stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<path d="M3 8 H10.6" stroke="'+color+'" stroke-width="2.4" stroke-linecap="round"/>'+
+      '<path d="M9.6 4.4 L13.2 8 L9.6 11.6" fill="none" stroke="'+color+'" stroke-width="2.4" '+
+      'stroke-linecap="round" stroke-linejoin="round"/></svg>'});
+  }
+  function placeArrows(group,pts,color,spacing){
+    var carry=spacing*0.55;
+    for(var i=1;i<pts.length;i++){
+      var a=pts[i-1], b=pts[i];
+      var len=segMeters(a,b);
+      if(len<1) continue;
+      var deg=screenAngle(a,b);
+      var t=carry;
+      while(t<len){
+        var f=t/len;
+        var pos=[a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f];
+        L.marker(pos,{icon:arrowIcon(color,deg),interactive:false,zIndexOffset:400}).addTo(group);
+        t+=spacing;
+      }
+      carry=t-len;
+    }
+  }
+  placeArrows(oLayer,orange,'#F26B0F',95);
+  placeArrows(gLayer,green,'#1B7F45',150);
+  placeArrows(gLayer,greenTail,'#1B7F45',150);
+
+  // ---------- badges ----------
+  L.marker(P.daonan,{icon:L.divIcon({className:'',html:
+    '<div style="background:#C7362F;color:#fff;font:900 12px/1 \'Noto Sans TC\',sans-serif;'+
+    'padding:6px 9px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35);white-space:nowrap">'+
+    '✕ 道南橋封閉</div>',iconSize:[0,0],iconAnchor:[45,36]})}).addTo(gLayer);
+
+  L.marker(P.sanjiao,{icon:L.divIcon({className:'',html:
+    '<div style="background:#F26B0F;color:#fff;font:900 11px/1 \'Noto Sans TC\',sans-serif;'+
+    'padding:5px 8px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.3);white-space:nowrap">'+
+    '↺ 政大正門前三角迴轉</div>',iconSize:[0,0],iconAnchor:[-10,26]})}).addTo(oLayer);
+
+  // ---------- bus stops ----------
+  var stops = [
+    ['新光路口', P.xinguangKou, true,  '往西方向取消停靠'],
+    ['政大', P.zhengdaW, false, '往西正常；往東取消'],
+    ['政大', P.zhengdaE, true,  '往東取消停靠'],
+    ['政大一', P.zhengda1, false, '改道時往南停靠；南環幹線往東取消'],
+    ['政大(聯合醫院)', P.hospital, false, '棕18 改由此起站'],
+    ['指南路口', P.zhinanKou, false, '正常停靠'],
+    ['指南路', P.zhinanStop, false, '正常停靠'],
+    ['文山行政中心(木新)', P.wenshan, true, '933 往北、往南取消'],
+    ['萬壽橋頭(木柵)', P.wanshouTou, true, '933 往南取消'],
+    ['木柵國小', P.muzhaES, false, '933 改道停靠'],
+    ['指南山莊', P.zhinanShanzhuang, false, '小10、南環幹線停靠'],
+    ['萬壽橋(新光)', P.xinguangN, false, '正常停靠']
+  ];
+  stops.forEach(function(s){
+    L.circleMarker(s[1],{radius:6,color:'#fff',weight:2,
+      fillColor:s[2]?'#C7362F':'#24272B',fillOpacity:1})
+      .bindPopup('<b>'+s[0]+'</b><br>'+s[3]).addTo(sLayer);
+    L.marker(s[1],{icon:L.divIcon({className:'',
+      html:'<span class="stoplbl'+(s[2]?' x':'')+'">'+s[0]+'</span>',
+      iconSize:[0,0],iconAnchor:[0,0]}),interactive:false}).addTo(sLayer);
+  });
+
+  gLayer.addTo(map); oLayer.addTo(map); sLayer.addTo(map);
+
+  function toggle(id,lyr){
+    var btn=document.getElementById(id);
+    btn.addEventListener('click',function(){
+      if(map.hasLayer(lyr)){ map.removeLayer(lyr); btn.classList.remove('on'); }
+      else { lyr.addTo(map); btn.classList.add('on'); }
+    });
+  }
+  toggle('bG',gLayer); toggle('bO',oLayer); toggle('bS',sLayer);
+
+  var bounds=L.latLngBounds(green.concat(orange,greenTail,stops.map(function(s){return s[1];})));
+  function fit(){ map.fitBounds(bounds,{padding:[45,45]}); }
+  fit();
+  document.getElementById('bFit').addEventListener('click',fit);
+  setTimeout(function(){ map.invalidateSize(); fit(); },350);
+})();
+</script>
+</body>
+</html>

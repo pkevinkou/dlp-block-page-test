@@ -6,3 +6,8 @@
   from = "/api/echo"
   to = "/.netlify/functions/echo"
   status = 200
+
+[[redirects]]
+  from = "/api/pets"
+  to = "/.netlify/functions/pets"
+  status = 200

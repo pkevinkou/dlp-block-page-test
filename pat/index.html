@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>照片桌寵</title>
+<style>
+  :root{ --ink:#2b2b2b; --line:#d9d5cd; --accent:#e8734a; --panel:rgba(255,255,255,.94); }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; font-family:"Noto Sans TC",system-ui,sans-serif; }
+  #scene{ position:fixed; inset:0;
+    background:linear-gradient(180deg,#cfe8f5 0%,#e8f4ec 55%,#dcecd6 100%); }
+  #ground{ position:fixed; left:0; right:0; bottom:0; height:70px;
+    background:linear-gradient(180deg,#c8dcc0,#b3cfa8); border-top:2px solid #9cbf90; }
+
+  /* 寵物 */
+  .pet{ position:fixed; bottom:70px; cursor:grab; user-select:none; touch-action:none;
+        will-change:transform; text-align:center; }
+  .pet.drag{ cursor:grabbing; }
+  .pet .sprite{ display:block; object-fit:contain; image-rendering:auto;
+        filter:drop-shadow(0 3px 3px rgba(0,0,0,.22)); pointer-events:none; }
+  .pet .nm{ font-size:11px; font-weight:700; color:#3a3a3a; margin-top:2px;
+        text-shadow:0 1px 0 rgba(255,255,255,.7); white-space:nowrap; }
+  .pet .shadow{ position:absolute; left:50%; bottom:12px; transform:translateX(-50%);
+        width:60%; height:8px; background:rgba(0,0,0,.18); border-radius:50%; filter:blur(2px); z-index:-1; }
+  .bubble{ position:absolute; left:50%; transform:translateX(-50%);
+        background:#fff; border:2px solid #4a3728; border-radius:12px; padding:4px 11px;
+        font-size:13px; white-space:nowrap; box-shadow:2px 2px 0 rgba(0,0,0,.1); z-index:20; }
+  .bubble::after{ content:""; position:absolute; left:50%; bottom:-8px; transform:translateX(-50%);
+        border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #4a3728; }
+  .particle{ position:absolute; font-size:16px; pointer-events:none; z-index:15; }
+
+  /* 控制面板 */
+  #panel{ position:fixed; top:12px; left:12px; width:280px; max-height:calc(100vh - 24px); overflow:auto;
+        background:var(--panel); border-radius:14px; padding:14px 16px; z-index:100;
+        box-shadow:0 6px 24px rgba(0,0,0,.14); }
+  #panel h1{ font-size:16px; margin:0 0 2px; }
+  #panel .hint{ font-size:11px; color:#888; line-height:1.5; margin-bottom:10px; }
+  .drop{ border:2px dashed #c3bdb0; border-radius:10px; padding:16px 10px; text-align:center;
+        font-size:13px; color:#8a8477; cursor:pointer; transition:.12s; }
+  .drop:hover,.drop.over{ border-color:var(--accent); color:var(--accent); background:#fff7f3; }
+  .list{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .row{ display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line);
+        border-radius:9px; padding:6px 8px; }
+  .row img{ width:34px; height:34px; object-fit:cover; border-radius:7px; flex:none; background:#eee; }
+  .row .rn{ font-size:13px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row button{ border:none; background:#f0ede8; border-radius:6px; font-size:12px; padding:4px 8px; cursor:pointer; }
+  .row button:hover{ background:#e3ded6; }
+  #toggle{ position:fixed; top:12px; left:12px; z-index:99; background:var(--panel); border:none;
+        border-radius:9px; padding:7px 11px; font-size:15px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); display:none; }
+
+  /* 編輯視窗 */
+  #modal{ position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:200; display:none;
+        align-items:center; justify-content:center; padding:20px; }
+  #modal.show{ display:flex; }
+  .card{ background:#fff; border-radius:16px; padding:20px 22px; width:100%; max-width:420px;
+        max-height:90vh; overflow:auto; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+  .card h2{ font-size:16px; margin:0 0 14px; }
+  .card label{ display:block; font-size:12px; font-weight:700; color:#666; margin:14px 0 5px; }
+  .card input[type=text],.card textarea{ width:100%; padding:7px 10px; border:1.5px solid #ddd;
+        border-radius:8px; font-size:13px; font-family:inherit; }
+  .card textarea{ height:70px; resize:vertical; }
+  .exps{ display:flex; gap:8px; }
+  .exp{ flex:1; text-align:center; }
+  .exp .box{ border:2px dashed #d0cabb; border-radius:8px; height:70px; display:flex;
+        align-items:center; justify-content:center; cursor:pointer; overflow:hidden; background:#faf9f6; }
+  .exp .box img{ width:100%; height:100%; object-fit:cover; }
+  .exp .box span{ font-size:11px; color:#a09a8c; }
+  .exp small{ font-size:10px; color:#999; display:block; margin-top:3px; }
+  .card .snd{ font-size:12px; color:#555; margin-top:4px; }
+  .btns{ display:flex; gap:8px; margin-top:20px; }
+  .btns button{ flex:1; padding:9px; border:none; border-radius:9px; font-size:14px; font-weight:700; cursor:pointer; }
+  .btns .save{ background:var(--accent); color:#fff; }
+  .btns .cancel{ background:#eee; color:#444; }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="ground"></div>
+
+<button id="toggle">🐾</button>
+<div id="panel">
+  <h1>照片桌寵 🐾</h1>
+  <div class="hint">
+    上傳照片 → 變成會動的角色。<br>
+    點一下：說話　連點 5 下：愛心　拖曳：移動<br>
+    可自訂表情、聲音、慣用語。資料只存在你的瀏覽器，不會上傳。
+  </div>
+  <div class="drop" id="drop">點此或拖曳照片上傳<br><small>可一次多張</small></div>
+  <input type="file" id="file" accept="image/*" multiple hidden>
+  <div class="list" id="list"></div>
+</div>
+
+<!-- 編輯視窗 -->
+<div id="modal">
+  <div class="card">
+    <h2>編輯角色</h2>
+    <label>名字</label>
+    <input type="text" id="mName" maxlength="12" placeholder="幫牠取個名字">
+
+    <label>表情圖（可選，沒設就用一般表情＋表情符號）</label>
+    <div class="exps">
+      <div class="exp"><div class="box" data-exp="normal"><span>一般</span></div><small>必備</small></div>
+      <div class="exp"><div class="box" data-exp="happy"><span>開心</span></div><small>點擊時</small></div>
+      <div class="exp"><div class="box" data-exp="sleep"><span>睡覺</span></div><small>發呆久了</small></div>
+    </div>
+
+    <label>聲音（可選，點擊時播放）</label>
+    <input type="file" id="mSound" accept="audio/*">
+    <div class="snd" id="mSoundInfo">未設定</div>
+
+    <label>慣用語（一行一句）</label>
+    <textarea id="mPhrases" placeholder="嗨～&#10;今天過得好嗎？&#10;摸摸我"></textarea>
+
+    <div class="btns">
+      <button class="cancel" id="mCancel">取消</button>
+      <button class="save" id="mSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const scene = $("#scene");
+const GROUND = 70, MAXDIM = 320; // 上傳圖縮到最長邊 320px 存 localStorage
+const store = {
+  load(){ try{ return JSON.parse(localStorage.getItem("pat_pets")||"[]"); }catch(e){ return []; } },
+  save(p){ try{ localStorage.setItem("pat_pets", JSON.stringify(p)); }
+           catch(e){ alert("儲存空間已滿，請刪掉一些角色或用小一點的圖。"); } }
+};
+
+// 把上傳圖縮小成 dataURL（避免塞爆 localStorage）
+function fileToSprite(file){
+  return new Promise((res,rej)=>{
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let {width:w, height:h} = img;
+        const sc = Math.min(1, MAXDIM/Math.max(w,h));
+        w = Math.round(w*sc); h = Math.round(h*sc);
+        const c = document.createElement("canvas"); c.width=w; c.height=h;
+        c.getContext("2d").drawImage(img,0,0,w,h);
+        res({ url:c.toDataURL("image/png"), w, h });
+      };
+      img.onerror = rej; img.src = fr.result;
+    };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+function fileToDataURL(file){
+  return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); });
+}
+
+// ---- 寵物類別 ----
+class Pet{
+  constructor(data){
+    Object.assign(this, data);
+    this.state="idle"; this.dir=1; this.x = data.x ?? (60+Math.random()*(innerWidth-200));
+    this.targetX=null; this.clicks=0; this.t0=performance.now(); this.next=0; this.blinkOff=0;
+    this.build();
+    this.schedule(0);
+  }
+  build(){
+    const el=document.createElement("div"); el.className="pet";
+    el.innerHTML=`<div class="shadow"></div>
+      <img class="sprite" src="${this.images.normal.url}" style="width:${this.dispW}px">
+      <div class="nm">${escapeHtml(this.name)}</div>`;
+    this.el=el; this.sprite=el.querySelector(".sprite"); this.nameEl=el.querySelector(".nm");
+    scene.appendChild(el);
+    el.addEventListener("pointerdown", e=>this.down(e));
+    el.addEventListener("click", ()=>this.click());
+    this.place();
+  }
+  get dispW(){ const nw=this.images.normal.w, nh=this.images.normal.h; const H=100; return Math.round(nw*(H/nh)); }
+  place(){ this.el.style.left=this.x+"px"; }
+  setImg(kind){
+    const im = this.images[kind] || this.images.normal;
+    if(this.sprite.dataset.k!==kind){ this.sprite.src=im.url; this.sprite.dataset.k=kind; }
+  }
+  // 行為排程
+  schedule(delay){ clearTimeout(this._st); this._st=setTimeout(()=>this.decide(), delay); }
+  decide(){
+    if(this.dragging) return;
+    const r=Math.random();
+    if(r<0.45){ // 走動
+      this.targetX = 40 + Math.random()*(innerWidth - 120);
+      this.dir = this.targetX>this.x ? 1 : -1;
+      this.state="walk"; this.setImg("normal");
+      this.schedule(4000+Math.random()*4000);
+    }else if(r<0.62){ // 睡覺
+      this.state="sleep"; this.setImg("sleep");
+      this.say("zzZ...","💤",2500);
+      this.schedule(4000+Math.random()*3000);
+    }else{ // 發呆
+      this.state="idle"; this.setImg("normal");
+      if(Math.random()<0.35 && this.phrases.length) this.say(pick(this.phrases),"💭");
+      this.schedule(2500+Math.random()*3500);
+    }
+  }
+  // 每格更新（由全域 raf 呼叫）
+  tick(now){
+    // 走動位移
+    if(this.state==="walk" && this.targetX!=null && !this.dragging){
+      const d=this.targetX-this.x;
+      if(Math.abs(d)<3){ this.state="idle"; this.targetX=null; }
+      else this.x += Math.sign(d)*1.6;
+      this.place();
+    }
+    // 動畫：走路上下擺動 / 發呆呼吸 / 睡覺輕微
+    let bob=0, sy=1, rot=0;
+    const ph = now/1000;
+    if(this.state==="walk"){ bob = Math.abs(Math.sin(ph*8))*-5; rot = Math.sin(ph*8)*3; }
+    else if(this.state==="sleep"){ sy = 1+Math.sin(ph*2)*0.02; }
+    else { bob = Math.sin(ph*2)*-2; sy = 1+Math.sin(ph*2)*0.02; }
+    this.sprite.style.transform=`translateY(${bob}px) scaleY(${sy}) scaleX(${this.dir}) rotate(${rot}deg)`;
+  }
+  say(text,emoji,dur=2000){
+    if(this._b) this._b.remove();
+    const b=document.createElement("div"); b.className="bubble";
+    b.style.bottom=(this.el.offsetHeight+6)+"px";
+    b.innerHTML=(emoji?`<span style="margin-right:4px">${emoji}</span>`:"")+escapeHtml(text);
+    this.el.appendChild(b); this._b=b;
+    clearTimeout(this._bt); this._bt=setTimeout(()=>{ b.remove(); if(this._b===b)this._b=null; }, dur);
+  }
+  particle(emoji){
+    const p=document.createElement("div"); p.className="particle";
+    p.textContent=emoji; p.style.left=(Math.random()*this.el.offsetWidth)+"px";
+    p.style.bottom=(this.el.offsetHeight)+"px"; this.el.appendChild(p);
+    let f=0; const iv=setInterval(()=>{ f++; p.style.transform=`translateY(${-f*3}px)`;
+      p.style.opacity=Math.max(0,1-f/22); if(f>22){ clearInterval(iv); p.remove(); } },40);
+  }
+  click(){
+    if(this._moved) return;
+    this.clicks++;
+    if(this.clicks>=5){
+      this.clicks=0; this.state="idle"; this.setImg("happy");
+      this.say("最喜歡你了","❤️",2600);
+      for(let i=0;i<5;i++) setTimeout(()=>this.particle("❤️"), i*160);
+      setTimeout(()=>this.setImg("normal"),2600);
+      return;
+    }
+    this.setImg("happy");
+    this.say(this.phrases.length?pick(this.phrases):"嘿!","😆");
+    this.particle("⭐");
+    this.playSound();
+    clearTimeout(this._ht); this._ht=setTimeout(()=>this.setImg("normal"),1200);
+  }
+  playSound(){
+    if(!this.sound) return;
+    try{ const a=new Audio(this.sound); a.volume=0.8; a.play().catch(()=>{}); }catch(e){}
+  }
+  down(e){
+    e.preventDefault(); this.dragging=true; this._moved=false; this.el.classList.add("drag");
+    this.state="idle"; this.targetX=null; clearTimeout(this._st);
+    this._ox = e.clientX - this.x;
+    const mv=ev=>{
+      const nx=Math.max(0,Math.min(innerWidth-40, ev.clientX-this._ox));
+      if(Math.abs(nx-this.x)>3) this._moved=true;
+      this.x=nx; this.place();
+    };
+    const up=()=>{
+      this.dragging=false; this.el.classList.remove("drag");
+      removeEventListener("pointermove",mv); removeEventListener("pointerup",up);
+      this.schedule(400);
+      setTimeout(()=>this._moved=false,50);
+    };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up);
+  }
+  destroy(){ clearTimeout(this._st); clearTimeout(this._bt); this.el.remove(); }
+}
+
+// ---- 工具 ----
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ---- 應用狀態 ----
+let PETS=[];   // Pet 實例
+function persist(){
+  store.save(PETS.map(p=>({ id:p.id, name:p.name, images:p.images, sound:p.sound,
+    phrases:p.phrases, x:Math.round(p.x) })));
+  renderList();
+}
+function addPet(data){ const p=new Pet(data); PETS.push(p); persist(); }
+function removePet(id){ const i=PETS.findIndex(p=>p.id===id); if(i<0)return;
+  PETS[i].destroy(); PETS.splice(i,1); persist(); }
+
+// ---- 全域動畫迴圈 ----
+function loop(now){ for(const p of PETS) p.tick(now); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// ---- 上傳 ----
+const fileInput=$("#file"), drop=$("#drop");
+drop.addEventListener("click",()=>fileInput.click());
+drop.addEventListener("dragover",e=>{ e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
+drop.addEventListener("drop",e=>{ e.preventDefault(); drop.classList.remove("over"); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener("change",e=>{ handleFiles(e.target.files); fileInput.value=""; });
+async function handleFiles(files){
+  for(const f of files){
+    if(!f.type.startsWith("image/")) continue;
+    const sp=await fileToSprite(f);
+    addPet({ id:uid(), name:"新朋友", images:{normal:sp}, sound:null, phrases:["嗨～","今天過得好嗎？"] });
+  }
+}
+
+// ---- 面板清單 ----
+const listEl=$("#list");
+function renderList(){
+  listEl.innerHTML="";
+  PETS.forEach(p=>{
+    const row=document.createElement("div"); row.className="row";
+    row.innerHTML=`<img src="${p.images.normal.url}">
+      <span class="rn">${escapeHtml(p.name)}</span>
+      <button data-edit>編輯</button><button data-del>✕</button>`;
+    row.querySelector("[data-edit]").onclick=()=>openEdit(p.id);
+    row.querySelector("[data-del]").onclick=()=>{ if(confirm(`移除「${p.name}」？`)) removePet(p.id); };
+    listEl.appendChild(row);
+  });
+}
+
+// ---- 隱藏/顯示面板 ----
+const panel=$("#panel"), toggle=$("#toggle");
+scene.addEventListener("dblclick",()=>{ panel.style.display="none"; toggle.style.display="block"; });
+toggle.onclick=()=>{ panel.style.display="block"; toggle.style.display="none"; };
+
+// ---- 編輯視窗 ----
+const modal=$("#modal"); let editId=null, editDraft=null;
+function openEdit(id){
+  const p=PETS.find(x=>x.id===id); if(!p)return;
+  editId=id;
+  editDraft={ images:JSON.parse(JSON.stringify(p.images)), sound:p.sound };
+  $("#mName").value=p.name;
+  $("#mPhrases").value=(p.phrases||[]).join("\n");
+  $("#mSoundInfo").textContent = p.sound? "已設定聲音（點擊播放）" : "未設定";
+  document.querySelectorAll(".exp .box").forEach(box=>{
+    const k=box.dataset.exp, im=editDraft.images[k];
+    box.innerHTML = im ? `<img src="${im.url}">` : `<span>${({normal:"一般",happy:"開心",sleep:"睡覺"})[k]}</span>`;
+  });
+  modal.classList.add("show");
+}
+document.querySelectorAll(".exp .box").forEach(box=>{
+  box.onclick=()=>{
+    const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+    inp.onchange=async e=>{ const f=e.target.files[0]; if(!f)return;
+      const sp=await fileToSprite(f); editDraft.images[box.dataset.exp]=sp;
+      box.innerHTML=`<img src="${sp.url}">`; };
+    inp.click();
+  };
+});
+$("#mSound").onchange=async e=>{ const f=e.target.files[0]; if(!f)return;
+  editDraft.sound=await fileToDataURL(f); $("#mSoundInfo").textContent="已更新聲音"; };
+$("#mCancel").onclick=()=>modal.classList.remove("show");
+$("#mSave").onclick=()=>{
+  const p=PETS.find(x=>x.id===editId); if(!p){ modal.classList.remove("show"); return; }
+  p.name=$("#mName").value.trim()||"無名";
+  p.phrases=$("#mPhrases").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  p.images=editDraft.images; p.sound=editDraft.sound;
+  p.nameEl.textContent=p.name; p.setImg("normal"); p.sprite.dataset.k="";
+  p.sprite.src=p.images.normal.url; p.sprite.style.width=p.dispW+"px";
+  persist(); modal.classList.remove("show");
+};
+modal.addEventListener("click",e=>{ if(e.target===modal) modal.classList.remove("show"); });
+
+// ---- 啟動：載入既有 ----
+store.load().forEach(d=>{ if(d.images&&d.images.normal) addPet(d); });
+renderList();
+</script>
+</body>
+</html>

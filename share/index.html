@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>共用檔案區 — kevinkou</title>
+<style>
+  :root { --ink:#1d242b; --sub:#5a6068; --line:#e5e3de; --accent:#007465; --bg:#f7f6f3;
+          --warn:#8a4b2a; --danger:#a33; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;
+         background:var(--bg); color:var(--ink); line-height:1.6; }
+  .wrap { max-width:680px; margin:0 auto; padding:64px 24px 80px; }
+  header h1 { font-size:26px; margin:0 0 6px; letter-spacing:-.01em; }
+  header p { color:var(--sub); font-size:14px; margin:0 0 20px; }
+  a.back { color:var(--accent); text-decoration:none; font-size:13px; }
+  a.back:hover { text-decoration:underline; }
+
+  .notice { background:#fff; border:1px solid var(--line); border-left:3px solid var(--warn);
+            padding:12px 14px; font-size:13px; color:var(--sub); margin:0 0 28px; }
+  .notice strong { color:var(--warn); }
+
+  h2 { font-size:12px; letter-spacing:.16em; color:var(--sub); font-weight:700;
+       border-bottom:1px solid var(--line); padding-bottom:8px; margin:32px 0 6px; }
+
+  #drop { border:1.5px dashed var(--line); background:#fff; border-radius:4px;
+          padding:32px 20px; text-align:center; cursor:pointer; transition:.12s; }
+  #drop:hover, #drop.over { border-color:var(--accent); background:#fbfdfc; }
+  #drop p { margin:0; font-size:14px; color:var(--sub); }
+  #drop .big { font-size:15px; color:var(--ink); font-weight:600; margin-bottom:4px; }
+  #file { display:none; }
+
+  #status { font-size:13px; margin:12px 0 0; min-height:20px; }
+  #status.err { color:var(--danger); }
+  #status.ok { color:var(--accent); }
+
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:flex; align-items:center; gap:12px; padding:14px 4px;
+       border-bottom:1px solid var(--line); }
+  li:hover { background:#fff; }
+  .info { min-width:0; flex:1; }
+  .name { font-size:15px; font-weight:600; word-break:break-all; }
+  .meta { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--sub); }
+  .act { display:flex; gap:8px; flex-shrink:0; }
+  .act a, .act button { font-size:12px; font-family:inherit; text-decoration:none;
+        border:1px solid var(--line); background:#fff; color:var(--ink);
+        padding:5px 11px; border-radius:3px; cursor:pointer; line-height:1.4; }
+  .act a:hover { border-color:var(--accent); color:var(--accent); }
+  .act button:hover { border-color:var(--danger); color:var(--danger); }
+  .empty { color:var(--sub); font-size:14px; padding:24px 4px; }
+
+  footer { margin-top:56px; color:var(--sub); font-size:12px; }
+
+  @media (max-width:520px) {
+    .wrap { padding:40px 16px 60px; }
+    li { flex-wrap:wrap; }
+    .act { width:100%; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>共用檔案區</h1>
+      <p>任何人都可以上傳、下載、刪除這裡的檔案 · <a class="back" href="/">回首頁</a></p>
+    </header>
+
+    <div class="notice">
+      <strong>公開空間,無密碼保護。</strong>
+      任何知道這個網址的人都能看到、下載與刪除所有檔案。請勿放置含個資、憑證或客戶資料的內容。
+      單檔上限 4 MB,最多 50 個檔案。
+    </div>
+
+    <h2>上傳</h2>
+    <div id="drop">
+      <p class="big">把檔案拖到這裡</p>
+      <p>或點一下選擇檔案</p>
+    </div>
+    <input type="file" id="file" multiple>
+    <p id="status"></p>
+
+    <h2>檔案</h2>
+    <ul id="list"></ul>
+    <p class="empty" id="empty" hidden>目前沒有檔案。</p>
+
+    <footer>此為個人測試網站,內容隨時可能變動。</footer>
+  </div>
+
+<script>
+const API = "/api/files";
+const $ = (id) => document.getElementById(id);
+const drop = $("drop"), input = $("file"), status = $("status"),
+      list = $("list"), empty = $("empty");
+
+const ERRORS = {
+  too_big: "檔案超過 4 MB 上限",
+  full: "檔案數量已達上限,請先刪掉一些",
+  empty: "檔案是空的",
+  no_name: "缺少檔名",
+  not_found: "找不到這個檔案",
+};
+
+function say(msg, kind) {
+  status.textContent = msg;
+  status.className = kind || "";
+}
+
+function fmtSize(n) {
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+  return (n / 1024 / 1024).toFixed(2) + " MB";
+}
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const p = (x) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function load() {
+  try {
+    const res = await fetch(API);
+    const files = await res.json();
+    if (!Array.isArray(files)) throw new Error(files.error || "讀取失敗");
+
+    list.textContent = "";
+    empty.hidden = files.length > 0;
+
+    for (const f of files) {
+      const li = document.createElement("li");
+
+      const info = document.createElement("div");
+      info.className = "info";
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = f.name;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = [fmtSize(f.size), fmtTime(f.uploadedAt)].filter(Boolean).join("  ·  ");
+      info.append(name, meta);
+
+      const act = document.createElement("div");
+      act.className = "act";
+      const dl = document.createElement("a");
+      dl.href = `${API}?id=${encodeURIComponent(f.id)}`;
+      dl.textContent = "下載";
+      const del = document.createElement("button");
+      del.textContent = "刪除";
+      del.onclick = () => remove(f);
+      act.append(dl, del);
+
+      li.append(info, act);
+      list.append(li);
+    }
+  } catch (e) {
+    say("讀取清單失敗:" + e.message, "err");
+  }
+}
+
+async function remove(f) {
+  if (!confirm(`確定要刪除「${f.name}」?\n所有人都會看不到這個檔案。`)) return;
+  try {
+    const res = await fetch(`${API}?id=${encodeURIComponent(f.id)}`, { method: "DELETE" });
+    const r = await res.json();
+    if (!r.ok) throw new Error(ERRORS[r.error] || r.error || "刪除失敗");
+    say(`已刪除 ${f.name}`, "ok");
+    load();
+  } catch (e) {
+    say("刪除失敗:" + e.message, "err");
+  }
+}
+
+async function upload(files) {
+  let done = 0;
+  for (const f of files) {
+    say(`上傳中 ${f.name}(${done + 1}/${files.length})...`);
+    if (f.size > 4_000_000) {
+      say(`${f.name} 超過 4 MB 上限,略過`, "err");
+      continue;
+    }
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "x-file-name": encodeURIComponent(f.name) },
+        body: f,
+      });
+      const r = await res.json();
+      if (!r.ok) throw new Error(ERRORS[r.error] || r.error || "上傳失敗");
+      done++;
+    } catch (e) {
+      say(`${f.name} 上傳失敗:${e.message}`, "err");
+      await load();
+      return;
+    }
+  }
+  if (done) say(`已上傳 ${done} 個檔案`, "ok");
+  load();
+}
+
+drop.onclick = () => input.click();
+input.onchange = () => { if (input.files.length) upload([...input.files]); input.value = ""; };
+
+["dragenter", "dragover"].forEach((ev) =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => {
+  const files = [...(e.dataTransfer?.files || [])];
+  if (files.length) upload(files);
+});
+
+load();
+</script>
+</body>
+</html>

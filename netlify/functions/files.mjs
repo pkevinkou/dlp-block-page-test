@@ -9,8 +9,9 @@ const H = { "content-type": "application/json; charset=utf-8" };
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: H });
 
 export default async (req) => {
+  // strong consistency：預設的 eventual 模式下，剛上傳的檔案不會立刻出現在 list()。
   let store;
-  try { store = getStore("shared-files"); }
+  try { store = getStore({ name: "shared-files", consistency: "strong" }); }
   catch (e) { return json({ error: "store init: " + e.message }, 500); }
 
   const id = new URL(req.url).searchParams.get("id");

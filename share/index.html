@@ -181,9 +181,14 @@ async function upload(files) {
       continue;
     }
     try {
+      // content-type 必須是 octet-stream。交給瀏覽器自動判斷時，文字類的
+      // MIME type 會讓後端以 UTF-8 解碼 body，非法位元組被換成 U+FFFD，二進位檔案就毀了。
       const res = await fetch(API, {
         method: "POST",
-        headers: { "x-file-name": encodeURIComponent(f.name) },
+        headers: {
+          "x-file-name": encodeURIComponent(f.name),
+          "content-type": "application/octet-stream",
+        },
         body: f,
       });
       const r = await res.json();
